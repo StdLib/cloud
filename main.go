@@ -1,20 +1,27 @@
 package main
 
 import (
-	"log"
-	"net/http"
+	"context"
+	"os"
+
+	"server/internal"
+	"server/internal/environment"
 )
 
-func run() error {
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello world!"))
-	})
-	return http.ListenAndServe(":10443", nil)
+func run(
+	_ context.Context,
+	config internal.ServerConfig,
+) error {
+	tlsCert := config.TLSCert()
+	tlsKey := config.TLSKey()
+	server := internal.NewServer(config)
+	return server.ListenAndServeTLS(tlsCert, tlsKey)
 }
 
 func main() {
-	err := run()
+	ctx := context.Background()
+	err := run(ctx, environment.ServerConfig)
 	if err != nil {
-		log.Fatal(err)
+		os.Exit(1)
 	}
 }
